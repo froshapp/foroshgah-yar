@@ -1,0 +1,51 @@
+name: foroshgah_yar
+description: اپلیکیشن مدیریت پیشرفته فروشگاه ووکامرس - فروشگاه‌یار
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # HTTP & API
+  dio: ^5.4.0
+  pretty_dio_logger: ^1.3.1
+
+  # State Management
+  provider: ^6.1.1
+
+  # Storage
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.0.0
+
+  # UI
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  pull_to_refresh: ^2.0.0
+
+  # Date
+  shamsi_date: ^1.0.2
+  intl: ^0.19.0
+
+  # Utils
+  url_launcher: ^6.2.2
+  share_plus: ^7.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
