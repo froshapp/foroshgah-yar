@@ -11,16 +11,16 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _urlController = TextEditingController(text: 'https://apadanasleep.ir');
   final _tokenController = TextEditingController();
-  bool _obscureToken = true;
+  bool _hideToken = true;
 
-  static const _bg = Color(0xFF1A1B2E);
-  static const _card = Color(0xFF252640);
-  static const _primary = Color(0xFF6C63FF);
-  static const _text = Color(0xFFF0F0F5);
-  static const _muted = Color(0xFF9A9BB0);
+  static const bg = Color(0xFF16162A);
+  static const card = Color(0xFF22223A);
+  static const field = Color(0xFF2E2E4A);
+  static const accent = Color(0xFF7C6CFF);
+  static const white = Color(0xFFF5F5FA);
+  static const grey = Color(0xFF9B9BB5);
 
   @override
   void dispose() {
@@ -30,44 +30,78 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _connect() async {
-    if (!_formKey.currentState!.validate()) return;
+    final url = _urlController.text.trim();
+    final token = _tokenController.text.trim();
+
+    if (url.isEmpty || token.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('آدرس سایت و توکن را وارد کنید')),
+      );
+      return;
+    }
+
     final auth = context.read<AuthService>();
     final storeService = context.read<StoreService>();
 
-    final success = await auth.connectWithToken(
-      siteUrl: _urlController.text.trim(),
-      token: _tokenController.text.trim(),
-    );
+    final ok = await auth.connectWithToken(siteUrl: url, token: token);
 
-    if (success && mounted) {
+    if (ok && mounted) {
       final site = auth.site;
       await storeService.addStore(Store(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: site?['name'] ?? 'فروشگاه',
-        url: _urlController.text.trim(),
-        token: _tokenController.text.trim(),
+        url: url,
+        token: token,
       ));
     }
   }
 
-  InputDecoration _dec({required String label, required IconData icon, Widget? suffix}) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(color: _muted, fontSize: 14),
-      prefixIcon: Icon(icon, color: _muted, size: 22),
-      suffixIcon: suffix,
-      filled: true,
-      fillColor: const Color(0xFF2D2E48),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-      focusedBorder: OutlineInputBorder(
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, right: 4),
+      child: Text(text, style: const TextStyle(color: grey, fontSize: 13)),
+    );
+  }
+
+  Widget _field({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool obscure = false,
+    Widget? trailing,
+    TextInputType? type,
+  }) {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: field,
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _primary, width: 1.5),
       ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+      child: Row(
+        children: [
+          const SizedBox(width: 14),
+          Icon(icon, color: grey, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              obscureText: obscure,
+              keyboardType: type,
+              style: const TextStyle(color: white, fontSize: 15),
+              cursorColor: accent,
+              textDirection: TextDirection.ltr,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: hint,
+                hintStyle: const TextStyle(color: Color(0xFF6A6A85), fontSize: 14),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          if (trailing != null) trailing,
+          const SizedBox(width: 6),
+        ],
       ),
     );
   }
@@ -77,137 +111,122 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.watch<AuthService>();
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bg,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 20),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: _primary.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: const Icon(Icons.storefront_rounded, size: 42, color: _primary),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'فروشگاه‌یار',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: _text, fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'مدیریت فروشگاه ووکامرس',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: _muted, fontSize: 14),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // کارت فرم
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: _card,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          controller: _urlController,
-                          style: const TextStyle(color: _text, fontSize: 15),
-                          keyboardType: TextInputType.url,
-                          textDirection: TextDirection.ltr,
-                          decoration: _dec(label: 'آدرس سایت', icon: Icons.language),
-                          validator: (v) {
-                            if (v == null || v.isEmpty) return 'آدرس سایت را وارد کنید';
-                            if (!v.startsWith('http')) return 'آدرس باید با https شروع شود';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _tokenController,
-                          obscureText: _obscureToken,
-                          style: const TextStyle(color: _text, fontSize: 15, letterSpacing: 1),
-                          textDirection: TextDirection.ltr,
-                          decoration: _dec(
-                            label: 'توکن اتصال',
-                            icon: Icons.vpn_key_rounded,
-                            suffix: IconButton(
-                              icon: Icon(
-                                _obscureToken ? Icons.visibility_off : Icons.visibility,
-                                color: _muted,
-                              ),
-                              onPressed: () => setState(() => _obscureToken = !_obscureToken),
-                            ),
-                          ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'توکن الزامی است' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'توکن را از پیشخوان وردپرس ← فروشگاه‌یار بسازید',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: _muted, fontSize: 12),
-                        ),
-                        if (auth.error != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              auth.error!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: auth.isLoading ? null : _connect,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _primary,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: auth.isLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text(
-                                    'ورود به فروشگاه',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+          child: Column(
+            children: [
+              // لوگو
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.storefront_rounded, size: 36, color: accent),
               ),
-            ),
+              const SizedBox(height: 18),
+              const Text(
+                'فروشگاه‌یار',
+                style: TextStyle(color: white, fontSize: 26, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'مدیریت فروشگاه ووکامرس',
+                style: TextStyle(color: grey, fontSize: 14),
+              ),
+              const SizedBox(height: 36),
+
+              // کارت فرم
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: card,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _label('آدرس سایت'),
+                    _field(
+                      controller: _urlController,
+                      hint: 'https://example.com',
+                      icon: Icons.language,
+                      type: TextInputType.url,
+                    ),
+                    const SizedBox(height: 18),
+                    _label('توکن اتصال'),
+                    _field(
+                      controller: _tokenController,
+                      hint: 'توکن را اینجا بچسبانید',
+                      icon: Icons.vpn_key_rounded,
+                      obscure: _hideToken,
+                      trailing: IconButton(
+                        icon: Icon(
+                          _hideToken ? Icons.visibility_off : Icons.visibility,
+                          color: grey,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _hideToken = !_hideToken),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'توکن را از پیشخوان وردپرس ← فروشگاه‌یار بسازید\n(بدون تاریخ انقضا تا وقتی خودتان حذف کنید)',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: grey, fontSize: 11, height: 1.5),
+                    ),
+                    if (auth.error != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          auth.error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 22),
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: auth.isLoading ? null : _connect,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          disabledBackgroundColor: accent.withOpacity(0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: auth.isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'ورود به فروشگاه',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
